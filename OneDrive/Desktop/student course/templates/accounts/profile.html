@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h2>Profile Information</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                            {{ field.errors }}
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h3>Course History</h3>
+            </div>
+            <div class="card-body">
+                {% if enrollments %}
+                    <div class="list-group">
+                        {% for enrollment in enrollments %}
+                            <div class="list-group-item {% if enrollment.status == 'enrolled' %}list-group-item-success{% elif enrollment.status == 'dropped' %}list-group-item-danger{% else %}list-group-item-info{% endif %}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">{{ enrollment.course.title }}</h5>
+                                    <small>{{ enrollment.course.code }}</small>
+                                </div>
+                                <p class="mb-1">
+                                    <span class="badge {% if enrollment.status == 'enrolled' %}bg-success{% elif enrollment.status == 'dropped' %}bg-danger{% else %}bg-info{% endif %}">
+                                        {{ enrollment.get_status_display }}
+                                    </span>
+                                </p>
+                                <small>Enrolled: {{ enrollment.date_enrolled|date:"F j, Y" }}</small>
+                                {% if enrollment.course.website_link %}
+                                    <div class="mt-2">
+                                        <a href="{{ enrollment.course.website_link }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            Visit Course Website
+                                        </a>
+                                    </div>
+                                {% endif %}
+                                {% if enrollment.status == 'enrolled' %}
+                                    <div class="mt-2">
+                                        <a href="{% url 'course_detail' enrollment.course.id %}" class="btn btn-sm btn-info">View Course</a>
+                                        <form method="post" action="{% url 'drop_course' enrollment.course.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to drop this course?')">
+                                                Drop Course
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>You haven't enrolled in any courses yet.</p>
+                    <a href="{% url 'course_list' %}" class="btn btn-primary">Browse Courses</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

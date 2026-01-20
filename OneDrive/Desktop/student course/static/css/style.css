@@ -1,0 +1,122 @@
+/* Course List Styles */
+.card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #4a90e2, #357abd);
+    color: white;
+    border-bottom: none;
+    padding: 1rem;
+}
+
+.card-header .card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.course-details p {
+    margin-bottom: 0.5rem;
+    color: #555;
+}
+
+.course-details i {
+    color: #4a90e2;
+    width: 20px;
+}
+
+.card-footer {
+    border-top: 1px solid #eee;
+    padding: 1rem;
+}
+
+.btn {
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-info {
+    background-color: #4a90e2;
+    border-color: #4a90e2;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #357abd;
+    border-color: #357abd;
+    color: white;
+}
+
+.btn-success {
+    background-color: #2ecc71;
+    border-color: #2ecc71;
+}
+
+.btn-success:hover {
+    background-color: #27ae60;
+    border-color: #27ae60;
+}
+
+.btn-danger {
+    background-color: #e74c3c;
+    border-color: #e74c3c;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+    border-color: #c0392b;
+}
+
+.input-group {
+    max-width: 300px;
+}
+
+#courseSearch {
+    border-radius: 20px 0 0 20px;
+    border: 1px solid #ddd;
+}
+
+.input-group-text {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 0 20px 20px 0;
+}
+
+.alert-info {
+    background-color: #f8f9fa;
+    border-color: #4a90e2;
+    color: #4a90e2;
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-header .card-title {
+        font-size: 1.1rem;
+    }
+    
+    .btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+    }
+    
+    .course-details p {
+        font-size: 0.9rem;
+    }
+} 

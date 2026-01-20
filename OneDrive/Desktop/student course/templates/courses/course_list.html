@@ -1,0 +1,396 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load course_filters %}
+
+{% block title %}Explore Courses{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+        padding: 4rem 0;
+        margin-bottom: 3rem;
+        color: white;
+    }
+
+    .search-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        margin-top: -5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .search-form .input-group {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .search-form .form-control {
+        border: 1px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
+
+    .filter-controls select {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        border: 1px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .filter-controls select:hover {
+        border-color: #6366F1;
+    }
+
+    .course-card {
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .course-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+
+    .course-image {
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .course-placeholder {
+        height: 200px;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .badge {
+        font-size: 0.8rem;
+        padding: 0.5em 1em;
+    }
+
+    .badge-beginner {
+        background-color: #D1FAE5;
+        color: #059669;
+    }
+
+    .badge-intermediate {
+        background-color: #E0E7FF;
+        color: #4F46E5;
+    }
+
+    .badge-advanced {
+        background-color: #FEE2E2;
+        color: #DC2626;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .progress {
+        height: 6px;
+        border-radius: 3px;
+        background-color: #E2E8F0;
+    }
+
+    .progress-bar {
+        background-color: #6366F1;
+    }
+
+    .btn-primary {
+        background-color: #6366F1;
+        border-color: #6366F1;
+    }
+
+    .btn-primary:hover {
+        background-color: #4F46E5;
+        border-color: #4F46E5;
+    }
+
+    .btn-outline-primary {
+        color: #6366F1;
+        border-color: #6366F1;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #6366F1;
+        border-color: #6366F1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="display-4 fw-bold mb-3">Explore Our Courses</h1>
+                <p class="lead mb-0">Discover a world of knowledge with our diverse range of courses</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Search and Filter Section -->
+    <div class="search-section mb-5">
+        <form class="search-form" method="get" id="searchForm">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input 
+                            class="form-control border-start-0" 
+                            type="search" 
+                            placeholder="Search courses..." 
+                            name="search" 
+                            value="{{ search_query }}"
+                            id="searchInput"
+                            autocomplete="off"
+                        >
+                        {% if search_query %}
+                            <button type="button" class="btn btn-link border" id="clearSearch">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="d-flex gap-3">
+                        <div class="flex-grow-1">
+                            <select class="form-select" name="difficulty" id="difficultyFilter">
+                                <option value="">All Levels</option>
+                                <option value="Beginner" {% if selected_difficulty == 'Beginner' %}selected{% endif %}>Beginner</option>
+                                <option value="Intermediate" {% if selected_difficulty == 'Intermediate' %}selected{% endif %}>Intermediate</option>
+                                <option value="Advanced" {% if selected_difficulty == 'Advanced' %}selected{% endif %}>Advanced</option>
+                            </select>
+                        </div>
+                        <div class="flex-grow-1">
+                            <select class="form-select" name="status" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="upcoming" {% if selected_status == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                                <option value="ongoing" {% if selected_status == 'ongoing' %}selected{% endif %}>Ongoing</option>
+                                <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completed</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-end mt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter me-1"></i> Apply Filters
+                </button>
+            </div>
+        </form>
+
+        {% if search_query or selected_difficulty or selected_status %}
+            <div class="mt-4 d-flex align-items-center justify-content-between">
+                <div class="text-muted">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Showing {{ courses|length }} result{{ courses|length|pluralize }}
+                </div>
+                <button type="button" class="btn btn-outline-danger" id="clearFilters">
+                    <i class="fas fa-times me-1"></i>
+                    Clear All Filters
+                </button>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Courses Grid -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+        {% for course in courses %}
+        <div class="col">
+            <div class="card h-100 course-card">
+                {% if course.videos.all %}
+                    {% with first_video=course.videos.all|first %}
+                    <div class="position-relative">
+                        <img src="https://img.youtube.com/vi/{{ first_video.youtube_video_id }}/mqdefault.jpg" class="card-img-top course-image" alt="{{ course.title }}">
+                        <div class="position-absolute top-0 end-0 m-2">
+                            <span class="badge bg-danger"><i class="fas fa-video me-1"></i> {{ course.videos.count }} videos</span>
+                        </div>
+                        <div class="position-absolute bottom-0 start-50 translate-middle-x mb-2">
+                            <a href="{% url 'course_detail' course.id %}#course-videos" class="btn btn-sm btn-primary video-preview-btn">
+                                <i class="fas fa-play-circle me-1"></i> Watch Videos
+                            </a>
+                        </div>
+                    </div>
+                    {% endwith %}
+                {% elif course.thumbnail %}
+                    <img src="{{ course.thumbnail.url }}" class="card-img-top course-image" alt="{{ course.title }}">
+                {% else %}
+                    <div class="course-placeholder">
+                        <i class="fas fa-graduation-cap fa-3x"></i>
+                    </div>
+                {% endif %}
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0">{{ course.title }}</h5>
+                        <span class="badge badge-{{ course.difficulty_level|lower }}">
+                            {{ course.difficulty_level }}
+                        </span>
+                    </div>
+                    <h6 class="text-muted font-monospace mb-3">{{ course.code }}</h6>
+                    <p class="card-text text-muted">{{ course.description|truncatewords:25|highlight_content_words }}</p>
+                    
+                    <div class="d-flex justify-content-between mb-3">
+                        <div class="stat-item">
+                            <i class="fas fa-users text-primary"></i>
+                            <small style="color: var(--card-text);">{{ course.available_slots }} slots left</small>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-clock text-primary"></i>
+                            <small style="color: var(--card-text);">{{ course.credits }} credits</small>
+                        </div>
+                        {% if course.rating > 0 %}
+                        <div class="stat-item">
+                            <i class="fas fa-star {% if course.rating >= 4.5 %}text-warning{% endif %}"></i>
+                            <small style="color: var(--card-text);">{{ course.rating }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted">Course Progress</small>
+                            <small class="text-primary fw-bold">{{ course.progress_percentage|default:0 }}%</small>
+                        </div>
+                        <div class="progress" style="height: 10px; border-radius: 5px; background-color: rgba(0,0,0,0.1);">
+                            <div class="progress-bar bg-primary" role="progressbar" 
+                                 data-progress="{{ course.progress_percentage|default:0 }}"
+                                 aria-valuenow="{{ course.progress_percentage|default:0 }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'course_detail' course.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-info-circle me-1"></i> View Details
+                        </a>
+                        {% if user.is_authenticated %}
+                            {% if course.is_enrolled %}
+                                <button class="btn btn-success" disabled>
+                                    <i class="fas fa-check me-1"></i> Enrolled
+                                </button>
+                            {% else %}
+                                <form method="post" action="{% url 'enroll_course' course.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary w-100" 
+                                            {% if course.available_slots <= 0 %}disabled{% endif %}>
+                                        {% if course.available_slots > 0 %}
+                                            <i class="fas fa-user-plus me-1"></i> Enroll Now
+                                        {% else %}
+                                            <i class="fas fa-ban me-1"></i> Course Full
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center py-5">
+                <i class="fas fa-search fa-3x mb-3 d-block"></i>
+                <h4>No courses found</h4>
+                <p class="mb-0">Try adjusting your search criteria or browse all courses</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('searchForm');
+    const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+    const clearFilters = document.getElementById('clearFilters');
+    const difficultyFilter = document.getElementById('difficultyFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    
+    // Set progress bar widths based on data-progress attribute
+    document.querySelectorAll('.progress-bar[data-progress]').forEach(function(bar) {
+        const progress = bar.getAttribute('data-progress');
+        if (progress) {
+            bar.style.width = progress + '%';
+        }
+    });
+
+    // Function to submit form
+    function submitForm() {
+        searchForm.submit();
+    }
+
+    // Clear search
+    if (clearSearch) {
+        clearSearch.addEventListener('click', function(e) {
+            e.preventDefault();
+            searchInput.value = '';
+            submitForm();
+        });
+    }
+
+    // Clear all filters - Improved to ensure it works reliably
+    if (clearFilters) {
+        clearFilters.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Make sure we clear all inputs and selects in the form
+            const inputs = searchForm.querySelectorAll('input');
+            const selects = searchForm.querySelectorAll('select');
+            
+            inputs.forEach(input => {
+                input.value = '';
+            });
+            
+            selects.forEach(select => {
+                select.value = '';
+            });
+            
+            // Explicitly reset the ones we know by ID
+            if(searchInput) searchInput.value = '';
+            if(difficultyFilter) difficultyFilter.value = '';
+            if(statusFilter) statusFilter.value = '';
+            
+            // Submit the form with the cleared values
+            window.location.href = window.location.pathname;
+        });
+    }
+
+    // Submit form on search input enter
+    if(searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitForm();
+            }
+        });
+    }
+    
+    // Handle filter changes - removed to rely on submit button
+    // difficultyFilter.addEventListener('change', submitForm);
+    // statusFilter.addEventListener('change', submitForm);
+});
+</script>
+{% endblock %} 

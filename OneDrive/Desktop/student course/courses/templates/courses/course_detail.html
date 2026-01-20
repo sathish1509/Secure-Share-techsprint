@@ -1,0 +1,385 @@
+{% extends 'base.html' %}
+{% load course_filters %}
+{% load static %}
+
+{% block title %}{{ course.title }} - Course Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Video styling */
+    .video-container {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        margin-bottom: 1rem;
+    }
+    
+    .video-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(0,0,0,0.5);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .video-container:hover .video-overlay {
+        opacity: 1;
+        cursor: pointer;
+    }
+    
+    .course-video-item {
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .course-video-item:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .video-description {
+        padding: 1rem 0;
+    }
+    
+    /* Make sure iframe takes full width */
+    .ratio-16x9 iframe {
+        border: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <!-- Course Information Column -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">{{ course.title }}</h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Course Code:</strong> {{ course.code }}</p>
+                    <p><strong>Instructor:</strong> {{ course.instructor }}</p>
+                    <p><strong>Credits:</strong> {{ course.credits }}</p>
+                    <p><strong>Difficulty Level:</strong> 
+                        <span class="difficulty-badge difficulty-{{ course.difficulty_level }}">{{ course.difficulty_level|title }}</span>
+                    </p>
+                    <p><strong>Status:</strong> {{ course.status|title }}</p>
+                    <p><strong>Available Slots:</strong> {{ course.available_slots }}</p>
+                    <p><strong>Rating:</strong> {{ course.rating }} ({{ course.total_ratings }} ratings)</p>
+                    
+                    {% if course.website_link %}
+                    <p><strong>Official Website:</strong> 
+                        <a href="{% if 'http' in course.website_link %}{{ course.website_link }}{% else %}https://{{ course.website_link }}{% endif %}" 
+                           target="_blank" rel="noopener noreferrer">
+                            Visit Course Website
+                        </a>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Course Actions -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Course Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% if user.is_staff or user.is_superuser %}
+                        <a href="{% url 'attendance' course.id %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-clipboard-check"></i> Manage Attendance
+                        </a>
+                        <a href="{% url 'course_videos' course.id %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-video"></i> Manage Videos
+                        </a>
+                        {% else %}
+                        <a href="{% url 'student_attendance' course.id %}" class="list-group-item list-group-item-action">   
+                            <i class="fas fa-calendar-check"></i> View My Attendance
+                        </a>
+                        {% endif %}
+                        
+                        {% if user.is_authenticated %}
+                            {% if is_enrolled %}
+                            <a href="#" class="list-group-item list-group-item-action disabled">
+                                <i class="fas fa-check-circle"></i> Already Enrolled
+                            </a>
+                            {% else %}
+                            <form method="post" action="{% url 'enroll_course' course.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="list-group-item list-group-item-action text-success">
+                                    <i class="fas fa-user-plus"></i> Enroll in Course
+                                </button>
+                            </form>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Course Content Column -->
+        <div class="col-md-8">
+            <!-- Course Description -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">Course Description</h4>
+                </div>
+                <div class="card-body">
+                    <p class="course-description">{{ course.description|linebreaks|highlight_content_words }}</p>
+                </div>
+            </div>
+            
+            <!-- Course Videos -->
+            <div class="card mb-4" id="course-videos">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">Course Videos</h4>
+                </div>
+                <div class="card-body">
+                    {% if videos %}
+                        <div class="list-group mb-3">
+                            {% for video in videos %}
+                                <div class="list-group-item course-video-item">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-play-circle me-2"></i> {{ video.title }}
+                                        </h5>
+                                        <div>
+                                            <button class="btn btn-sm btn-outline-secondary refresh-video" data-video-id="{{ video.id }}" title="Refresh video">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-primary video-toggle" data-bs-toggle="collapse" data-bs-target="#video-{{ video.id }}">
+                                                <i class="fas fa-eye"></i> Watch
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="collapse" id="video-{{ video.id }}">
+                                        <div class="video-container mb-3">
+                                            <div class="ratio ratio-16x9">
+                                                <iframe src="https://www.youtube.com/embed/{{ video.youtube_video_id }}?rel=0&autoplay=1" 
+                                                        title="{{ video.title }}" 
+                                                        allowfullscreen 
+                                                        allow="autoplay; encrypted-media"
+                                                        onerror="this.onerror=null; this.parentElement.parentElement.innerHTML='<div class=\'alert alert-danger\'>Video could not be loaded. Please try again later.</div>';"></iframe>
+                                            </div>
+                                        </div>
+                                        <div class="video-error-container alert alert-danger d-none">
+                                            Video could not be loaded. Please try again later.
+                                        </div>
+                                        <div class="video-description">
+                                            <p>{{ video.description|linebreaks|highlight_content_words }}</p>
+                                        </div>
+                                        <div class="video-actions mt-2 d-flex justify-content-end">
+                                            <a href="{% url 'view_course_video' course.id video.id %}" class="btn btn-sm btn-info me-2" title="Direct video link">
+                                                <i class="fas fa-external-link-alt"></i> View
+                                            </a>
+                                            <button class="btn btn-sm btn-primary share-video me-2" data-video-id="{{ video.youtube_video_id }}" data-title="{{ video.title }}" data-video-url="{% url 'view_course_video' course.id video.id %}" title="Share video">
+                                                <i class="fas fa-share-alt"></i> Share
+                                            </button>
+                                            <button class="btn btn-sm btn-success download-notes" data-video-id="{{ video.id }}" data-title="{{ video.title }}" title="Download notes">
+                                                <i class="fas fa-file-download"></i> Notes
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <p>No videos available for this course yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-open first video if hash is #course-videos
+        if (window.location.hash === '#course-videos') {
+            setTimeout(() => {
+                const firstVideoToggle = document.querySelector('.video-toggle');
+                if (firstVideoToggle) {
+                    firstVideoToggle.click();
+                    // Scroll to the videos section with a small offset
+                    const videosSection = document.getElementById('course-videos');
+                    if (videosSection) {
+                        const headerOffset = 80;
+                        const sectionPosition = videosSection.getBoundingClientRect().top;
+                        const offsetPosition = sectionPosition + window.pageYOffset - headerOffset;
+                        
+                        window.scrollTo({
+                            top: offsetPosition,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            }, 500);
+        }
+        // Video overlay play functionality
+        const videoOverlays = document.querySelectorAll('.video-overlay');
+        videoOverlays.forEach(overlay => {
+            overlay.addEventListener('click', function() {
+                const videoId = this.getAttribute('data-video-id');
+                const videoCollapse = document.getElementById('video-' + videoId);
+                const collapseInstance = new bootstrap.Collapse(videoCollapse);
+                collapseInstance.show();
+            });
+        });
+
+        // Video toggle button functionality
+        const videoToggles = document.querySelectorAll('.video-toggle');
+        videoToggles.forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const icon = this.querySelector('i');
+                const expanded = this.getAttribute('aria-expanded') === 'true';
+                const targetId = this.getAttribute('data-bs-target');
+                const videoContainer = document.querySelector(targetId);
+                
+                if (expanded) {
+                    this.innerHTML = '<i class="fas fa-eye-slash"></i> Hide';
+                    
+                    // Ensure iframe is loaded with autoplay when showing
+                    setTimeout(() => {
+                        const iframe = videoContainer.querySelector('iframe');
+                        if (iframe) {
+                            // Make sure autoplay parameter is included
+                            let src = iframe.src;
+                            if (!src.includes('autoplay=1')) {
+                                iframe.src = src.includes('?') ? 
+                                    src + '&autoplay=1' : 
+                                    src + '?autoplay=1';
+                            }
+                        }
+                    }, 300);
+                } else {
+                    this.innerHTML = '<i class="fas fa-eye"></i> Watch';
+                    
+                    // Pause video when hiding
+                    setTimeout(() => {
+                        const iframe = videoContainer.querySelector('iframe');
+                        if (iframe) {
+                            // Store the current source
+                            const currentSrc = iframe.src;
+                            // Reset iframe to stop the video
+                            iframe.src = '';
+                            // Set back the source but without autoplay
+                            setTimeout(() => {
+                                iframe.src = currentSrc.replace('&autoplay=1', '').replace('?autoplay=1', '?');
+                            }, 100);
+                        }
+                    }, 300);
+                }
+            });
+        });
+        
+        // Refresh video button
+        const refreshButtons = document.querySelectorAll('.refresh-video');
+        refreshButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const videoId = this.getAttribute('data-video-id');
+                const iframe = document.querySelector('#video-' + videoId + ' iframe');
+                
+                if (iframe) {
+                    const src = iframe.src;
+                    iframe.src = '';
+                    
+                    // Add feedback with spinner
+                    const icon = this.querySelector('i');
+                    if (icon) {
+                        icon.classList.add('fa-spin');
+                    }
+                    
+                    // Reset video after a short delay
+                    setTimeout(() => {
+                        iframe.src = src;
+                        if (icon) {
+                            icon.classList.remove('fa-spin');
+                        }
+                    }, 1000);
+                }
+            });
+        });
+        
+        // Share video functionality
+        const shareButtons = document.querySelectorAll('.share-video');
+        shareButtons.forEach(button => {
+            button.addEventListener('click', async function() {
+                const videoId = this.getAttribute('data-video-id');
+                const videoTitle = this.getAttribute('data-title') || 'Course Video';
+                const directVideoUrl = this.getAttribute('data-video-url');
+                
+                // Use our direct video URL if available, otherwise fall back to YouTube
+                const videoUrl = directVideoUrl ? 
+                    window.location.origin + directVideoUrl : 
+                    `https://www.youtube.com/watch?v=${videoId}`;
+                
+                try {
+                    if (navigator.share) {
+                        await navigator.share({
+                            title: videoTitle,
+                            text: `Check out this video from our course: ${videoTitle}`,
+                            url: videoUrl
+                        });
+                    } else {
+                        // Fallback to clipboard
+                        navigator.clipboard.writeText(videoUrl)
+                            .then(() => {
+                                // Show toast instead of alert
+                                const toastEl = document.createElement('div');
+                                toastEl.className = 'toast align-items-center text-white bg-success border-0';
+                                toastEl.setAttribute('role', 'alert');
+                                toastEl.setAttribute('aria-live', 'assertive');
+                                toastEl.setAttribute('aria-atomic', 'true');
+                                toastEl.innerHTML = `
+                                    <div class="d-flex">
+                                        <div class="toast-body">
+                                            <i class="fas fa-check-circle me-2"></i> Video link copied to clipboard!
+                                        </div>
+                                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                    </div>
+                                `;
+                                document.body.appendChild(toastEl);
+                                const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+                                toast.show();
+                                
+                                // Remove toast after it's hidden
+                                toastEl.addEventListener('hidden.bs.toast', function() {
+                                    document.body.removeChild(toastEl);
+                                });
+                            })
+                            .catch(err => {
+                                console.error('Failed to copy: ', err);
+                                alert('Could not copy the video link automatically. The URL is: ' + videoUrl);
+                            });
+                    }
+                } catch (error) {
+                    console.error('Error sharing:', error);
+                }
+            });
+        });
+        
+        // Download notes (placeholder functionality)
+        const downloadButtons = document.querySelectorAll('.download-notes');
+        downloadButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('Download notes feature coming soon!');
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}YouTube Search Results - {{ course.title }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>YouTube Search Results</h2>
+            <p class="text-muted">Search results for "{{ query }}" - Click on a video to add it to {{ course.title }}</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'course_videos' course.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Videos
+            </a>
+        </div>
+    </div>
+
+    <!-- Search Form -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Search Again</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{% url 'search_youtube_videos' course.id %}">
+                <div class="input-group">
+                    <input type="text" name="query" class="form-control" value="{{ query }}" required>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Search Results -->
+    <div class="card">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Results</h5>
+        </div>
+        <div class="card-body">
+            {% if videos %}
+                <div class="row row-cols-1 row-cols-md-2 g-4">
+                    {% for video in videos %}
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-img-top position-relative">
+                                <img src="{{ video.thumbnail_url }}" alt="{{ video.title }}" class="img-fluid">
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    <span class="badge bg-dark">{{ video.published_at|date:"M d, Y" }}</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">{{ video.title }}</h5>
+                                <p class="card-text small">{{ video.description|truncatechars:150 }}</p>
+                            </div>
+                            <div class="card-footer">
+                                <form method="post" action="{% url 'add_course_video' course.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="title" value="{{ video.title }}">
+                                    <input type="hidden" name="description" value="{{ video.description }}">
+                                    <input type="hidden" name="youtube_video_id" value="{{ video.youtube_video_id }}">
+                                    <input type="hidden" name="order" value="0">
+                                    <button type="submit" class="btn btn-success w-100">
+                                        <i class="fas fa-plus-circle"></i> Add to Course
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <p class="mb-0">No videos found for your search query. Try different keywords.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card-img-top {
+        height: 180px;
+        object-fit: cover;
+    }
+    
+    .card-img-top img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+</style>
+{% endblock %}

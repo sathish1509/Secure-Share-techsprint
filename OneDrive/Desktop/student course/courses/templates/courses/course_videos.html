@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Videos - {{ course.title }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Manage Videos for {{ course.title }}</h2>
+            <p class="text-muted">Add, edit, or remove course videos.</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'course_detail' course.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Course
+            </a>
+            <a href="{% url 'add_course_video' course.id %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Video
+            </a>
+        </div>
+    </div>
+
+    <!-- Search YouTube -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Search YouTube Videos</h5>
+        </div>
+        <div class="card-body">
+            <form id="youtube-search-form" method="GET" action="{% url 'search_youtube_videos' course.id %}">
+                <div class="input-group">
+                    <input type="text" name="query" class="form-control" placeholder="Search for videos on YouTube" required>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Videos List -->
+    <div class="card">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Current Course Videos</h5>
+        </div>
+        <div class="card-body">
+            {% if videos %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Thumbnail</th>
+                                <th>Title</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for video in videos %}
+                            <tr>
+                                <td>{{ video.order }}</td>
+                                <td>
+                                    <img src="{{ video.youtube_thumbnail_url }}" alt="{{ video.title }}" class="img-thumbnail" style="width: 120px;">
+                                </td>
+                                <td>
+                                    <strong>{{ video.title }}</strong>
+                                    <div class="text-muted small">ID: {{ video.youtube_video_id }}</div>
+                                </td>
+                                <td>{{ video.created_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{% url 'edit_course_video' course.id video.id %}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                data-bs-toggle="modal" data-bs-target="#deleteVideoModal{{ video.id }}">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Delete Modal -->
+                                    <div class="modal fade" id="deleteVideoModal{{ video.id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Confirm Delete</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Are you sure you want to delete the video <strong>{{ video.title }}</strong>?</p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <form method="post" action="{% url 'delete_course_video' course.id video.id %}">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <p class="mb-0">No videos have been added to this course yet. Use the search function above to find videos or add them manually.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
