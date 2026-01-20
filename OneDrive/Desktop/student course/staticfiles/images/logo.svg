@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-    <!-- Graduation cap -->
-    <path d="M20 5L2 15L20 25L38 15L20 5Z" fill="#00E6E6"/>
-    <path d="M10 18V28L20 33L30 28V18L20 23L10 18Z" fill="#0066CC"/>
-    <path d="M20 25L38 15V17L20 27L2 17V15L20 25Z" fill="#001F3F"/>
-</svg> 
